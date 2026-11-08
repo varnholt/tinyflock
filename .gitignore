@@ -1,0 +1,21 @@
+/build/
+/.tools/
+/.agents/
+/.codex/
+/.aws/
+.env
+.env.*
+/target/
+/rust/target/
+/web/node_modules/
+/web/dist/
+*.blend1
+*.blend2
+/web/public/wasm/*
+!/web/public/wasm/.gitkeep
+/web/public/wasm-rust/*
+!/web/public/wasm-rust/.gitkeep
+
+# Historical source/asset archives stay local; curate before publishing.
+/boids-20260810T183526Z-1-001/
+/flock-20260810T183529Z-1-001/

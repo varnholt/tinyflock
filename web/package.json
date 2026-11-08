@@ -1,0 +1,24 @@
+{
+  "name": "tinyflock-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prebuild": "node scripts/check-wasm.mjs",
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "check:visual": "node scripts/visual-check.mjs",
+    "check:motion": "node --experimental-strip-types scripts/check-motion.mjs",
+    "check:lighting": "node --experimental-strip-types scripts/check-lighting.mjs",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.187.0",
+    "puppeteer": "25.16.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.6"
+  }
+}

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#102c3c" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <title>tinyflock — a study of flight</title>
+  </head>
+  <body>
+    <canvas id="scene" aria-label="Interactive three-dimensional flocking simulation"></canvas>
+    <header><a href="." class="wordmark">tinyflock<span> / a study of flight</span></a><span class="badge">C++23 · WebAssembly</span></header>
+    <section id="intro" class="intro"><p class="eyebrow">COLLECTIVE MOTION / 001</p><h1>Follow the evening.</h1><p>A few simple rules.<br>A sky full of possibility.</p></section>
+    <aside aria-label="Simulation controls">
+      <div class="panel-heading"><span>THE FLOCK</span><output id="status" role="status">Loading simulation…</output></div>
+      <label class="study-only">Flight movement<select id="flight-mode"><option value="flap">Flapping</option><option value="glide">Gliding</option><option value="natural">Flap &amp; glide</option></select></label>
+      <label>Population <output id="population-value">96</output><input id="population" type="range" min="16" max="384" step="16" value="96" /></label>
+      <label>Separation <output id="separation-value">1.8</output><input id="separation" type="range" min="0" max="3" step="0.1" value="1.8" /></label>
+      <label>Alignment <output id="alignment-value">0.8</output><input id="alignment" type="range" min="0" max="3" step="0.1" value="0.8" /></label>
+      <label>Cohesion <output id="cohesion-value">0.4</output><input id="cohesion" type="range" min="0" max="3" step="0.1" value="0.4" /></label>
+      <details id="advanced" class="flock-only">
+        <summary>Advanced behavior</summary>
+        <fieldset><legend>Predictive avoidance</legend>
+          <label class="toggle"><input id="avoidance-enabled" type="checkbox" checked /> Anticipate close encounters</label>
+          <label>Lookahead · s <output id="lookahead-value">4</output><input id="lookahead" type="range" min="0.5" max="8" step="0.5" value="4" /></label>
+          <label>Center clearance <output id="clearance-value">2.5</output><input id="clearance" type="range" min="0.5" max="6" step="0.25" value="2.5" /></label>
+        </fieldset>
+        <details id="flight-settings"><summary>Flight &amp; perception</summary>
+          <label class="toggle"><input id="forward-flight" type="checkbox" checked /> Forward flight steering</label>
+          <label>Minimum speed <output id="min-speed-value">6</output><input id="min-speed" type="range" min="0" max="12" step="0.5" value="6" /></label>
+          <label>Maximum speed <output id="max-speed-value">8</output><input id="max-speed" type="range" min="0.5" max="12" step="0.5" value="8" /></label>
+          <label>Acceleration limit <output id="acceleration-value">2</output><input id="acceleration" type="range" min="0.5" max="6" step="0.25" value="2" /></label>
+          <label>Perception radius <output id="perception-value">16</output><input id="perception" type="range" min="8" max="40" step="1" value="16" /></label>
+          <label>Separation radius <output id="spacing-value">5.5</output><input id="spacing" type="range" min="1" max="10" step="0.5" value="5.5" /></label>
+          <label>Viewing cone · ° <output id="view-angle-value">270</output><input id="view-angle" type="range" min="90" max="360" step="15" value="270" /></label>
+          <label>Social neighbors <output id="neighbors-value">7</output><input id="neighbors" type="range" min="0" max="16" step="1" value="7" /></label>
+          <p class="control-note">Zero selects all visible neighbors. Speed and acceleration use world units per second and per second squared.</p>
+        </details>
+        <details id="airspace-settings"><summary>Airspace &amp; obstacles</summary>
+          <label class="toggle"><input id="altitude-enabled" type="checkbox" checked /> Maintain flight level</label>
+          <label>Altitude offset <output id="altitude-value">0</output><input id="altitude" type="range" min="-15" max="15" step="1" value="0" /></label>
+          <label>Altitude response · s <output id="altitude-response-value">10</output><input id="altitude-response" type="range" min="2" max="20" step="1" value="10" /></label>
+          <label>Boundary radius <output id="world-radius-value">55</output><input id="world-radius" type="range" min="30" max="120" step="5" value="55" /></label>
+          <label>Boundary strength <output id="boundary-value">5</output><input id="boundary" type="range" min="0" max="8" step="0.5" value="5" /></label>
+          <label class="toggle"><input id="obstacles-enabled" type="checkbox" /> Obstacle course</label>
+          <p class="control-note">Amber wire spheres show the solid obstacle volumes.</p>
+          <label>Obstacle lookahead · s <output id="obstacle-lookahead-value">4</output><input id="obstacle-lookahead" type="range" min="1" max="8" step="0.5" value="4" /></label>
+          <label>Obstacle margin <output id="obstacle-margin-value">1</output><input id="obstacle-margin" type="range" min="0" max="4" step="0.5" value="1" /></label>
+        </details>
+        <details id="input-settings"><summary>External inputs &amp; repeatability</summary>
+          <p class="control-note">Uniform external acceleration demonstrates the library's per-bird input. It shares the steering budget.</p>
+          <label>External force X <output id="force-x-value">0</output><input id="force-x" type="range" min="-2" max="2" step="0.1" value="0" /></label>
+          <label>External force Y <output id="force-y-value">0</output><input id="force-y" type="range" min="-2" max="2" step="0.1" value="0" /></label>
+          <label>External force Z <output id="force-z-value">0</output><input id="force-z" type="range" min="-2" max="2" step="0.1" value="0" /></label>
+          <label>Pointer influence <output id="pointer-strength-value">2</output><input id="pointer-strength" type="range" min="0" max="5" step="0.25" value="2" /></label>
+          <label>Pointer radius <output id="pointer-radius-value">70</output><input id="pointer-radius" type="range" min="10" max="120" step="5" value="70" /></label>
+          <label>Random seed <input id="seed" type="number" min="0" max="4294967295" step="1" value="42" /></label>
+          <label class="toggle"><input id="spatial-grid" type="checkbox" checked /> Use spatial neighbor search</label>
+          <p class="control-note">Disable to compare the all-pairs reference. Large lookahead distances can reduce the grid's benefit.</p>
+          <p class="diagnostics">Candidate pairs / step <output id="neighbor-checks">0</output><br>Birds avoiding / step <output id="avoidance-count">0</output></p>
+        </details>
+      </details>
+      <div class="buttons"><button id="pause" disabled>Pause</button><button id="reset" disabled>Reset seed</button></div>
+      <button id="reset-defaults" class="view-button" disabled>Reset defaults</button>
+      <button id="view" class="view-button" aria-pressed="false" disabled>Bird study</button>
+      <button id="camera" class="view-button camera-button" aria-pressed="true" disabled>Camera: drifting</button>
+      <button id="hide-ui" class="view-button" aria-keyshortcuts="H">Hide interface · H</button>
+      <p id="error" role="alert" hidden></p>
+    </aside>
+    <button id="show-ui" class="restore-interface" aria-keyshortcuts="H Escape" title="Show interface (H or Escape)" hidden>Show controls</button>
+    <footer><span>Drag to orbit · Scroll to explore<br><strong>Hold Shift to attract · Shift + Alt to repel</strong></span><span><span id="view-note">Collective motion / 001</span><br><a href="./assets/CREDITS.md" target="_blank" rel="noopener">Models & sky</a></span></footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

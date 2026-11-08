@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.25)
+project(tinyflock_consumer LANGUAGES CXX)
+find_package(tinyflock CONFIG REQUIRED)
+add_executable(tinyflock_consumer main.cpp)
+target_link_libraries(tinyflock_consumer PRIVATE tinyflock::tinyflock)

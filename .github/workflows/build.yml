@@ -1,0 +1,86 @@
+name: Build and check
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build/native --config Release
+      - name: Check
+        run: ctest --test-dir build/native -C Release --output-on-failure
+      - name: Check installed CMake package
+        run: |
+          cmake --install build/native --config Release --prefix "${{ github.workspace }}/build/install"
+          cmake -S tests/consumer -B build/consumer -DCMAKE_PREFIX_PATH="${{ github.workspace }}/build/install" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/consumer --config Release
+
+  browser:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Set up Emscripten
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git .tools/emsdk
+          .tools/emsdk/emsdk install 7.0.0
+          .tools/emsdk/emsdk activate 7.0.0
+      - name: Build WebAssembly
+        run: |
+          source .tools/emsdk/emsdk_env.sh
+          emcmake cmake -S . -B build/wasm -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+          cmake --build build/wasm
+      - name: Check WebAssembly adapter
+        run: |
+          node tests/wasm-smoke.mjs
+          node web/scripts/trace-motion.mjs --check
+      - name: Build browser demo
+        working-directory: web
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
+        run: |
+          npm ci
+          npm run check:motion
+          npm run check:lighting
+          npm run build
+      - uses: actions/configure-pages@v5
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          path: web/dist
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [native, browser]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - name: Deploy demo
+        id: deployment
+        uses: actions/deploy-pages@v4

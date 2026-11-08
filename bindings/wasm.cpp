@@ -180,4 +180,3 @@ EMSCRIPTEN_BINDINGS(tinyflock) {
         .function("stats", &BrowserSimulation::stats)
         .function("state", &BrowserSimulation::state);
 }
-

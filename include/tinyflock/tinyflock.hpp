@@ -37,7 +37,7 @@ struct Boid {
     constexpr auto operator<=>(const Boid&) const = default;
 };
 
-// Distances are world units, speed is units/s, acceleration is units/s².
+// Distances are world units, speed is units/s, acceleration is units/sÂ².
 enum class Steering { free, forward_flight };
 enum class NeighborSearch { all_pairs, spatial_grid };
 using Seconds = std::chrono::duration<float>;
@@ -107,7 +107,7 @@ public:
     void reset(std::size_t count, std::uint32_t seed = 42);
 
     // One synchronous update; caller owns scheduling. Accepts [0s, 100ms].
-    // Optional accelerations are per agent, in world units/s², for this step only.
+    // Optional accelerations are per agent, in world units/sÂ², for this step only.
     [[nodiscard]] std::expected<void, Error> step(Seconds elapsed, std::span<const Vec3> accelerations = {});
 
     [[nodiscard]] const Config& config() const noexcept { return config_; }
@@ -509,5 +509,3 @@ inline std::expected<void, Error> Simulation::step(Seconds elapsed, std::span<co
     return {};
 }
 } // namespace tinyflock
-
-

@@ -1,0 +1,7 @@
+[workspace]
+members = ["rust", "rust/wasm"]
+resolver = "3"
+
+[profile.release]
+lto = true
+codegen-units = 1

@@ -26,8 +26,10 @@ try {
   });
   page.on('requestfailed', request => errors.push(`Request failed: ${request.url()}`));
   page.on('response', response => { if (response.status() >= 400) errors.push(`HTTP ${response.status()}: ${response.url()}`); });
-  await page.goto(url + '?view=bird', { waitUntil: 'networkidle0', timeout: 60000 });
+  const rust = process.env.TINYFLOCK_CORE === 'rust';
+  await page.goto(url + `?view=bird${rust ? '&core=rust' : ''}`, { waitUntil: 'networkidle0', timeout: 60000 });
   await page.waitForSelector('canvas[data-ready="true"]', { timeout: 60000 });
+  assert.equal(await page.$eval('#backend', select => select.value), rust ? 'rust' : 'cpp');
   await page.screenshot({ path: `${output}/bird-study.png` });
   await page.screenshot({ path: `${docs}/bird-study.webp`, type: 'webp', quality: 88 });
   await page.select('#flight-mode', 'glide');
@@ -143,6 +145,14 @@ try {
   await page.focus('#population');
   await page.keyboard.press('h');
   assert.notEqual(await page.$eval('aside', panel => getComputedStyle(panel).display), 'none', 'editing controls must not toggle the interface');
+  await page.click('#advanced > summary');
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 60000 }),
+    page.select('#backend', rust ? 'cpp' : 'rust'),
+  ]);
+  await page.waitForSelector('canvas[data-ready="true"]', { timeout: 60000 });
+  assert.equal(await page.$eval('#backend', select => select.value), rust ? 'cpp' : 'rust');
+  assert((await page.$eval('#backend-badge', badge => badge.textContent)).includes(rust ? 'C++23' : 'Rust'));
   assert.deepEqual(errors, [], 'No failed assets, runtime errors, or shader errors');
   console.log(`Browser checks passed. Screenshots: ${output}`);
 } finally {

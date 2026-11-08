@@ -9,7 +9,7 @@
   </head>
   <body>
     <canvas id="scene" aria-label="Interactive three-dimensional flocking simulation"></canvas>
-    <header><a href="." class="wordmark">tinyflock<span> / a study of flight</span></a><span class="badge">C++23 · WebAssembly</span></header>
+    <header><a href="." class="wordmark">tinyflock<span> / a study of flight</span></a><span id="backend-badge" class="badge">C++23 · WebAssembly</span></header>
     <section id="intro" class="intro"><p class="eyebrow">COLLECTIVE MOTION / 001</p><h1>Follow the evening.</h1><p>A few simple rules.<br>A sky full of possibility.</p></section>
     <aside aria-label="Simulation controls">
       <div class="panel-heading"><span>THE FLOCK</span><output id="status" role="status">Loading simulation…</output></div>
@@ -20,6 +20,8 @@
       <label>Cohesion <output id="cohesion-value">0.4</output><input id="cohesion" type="range" min="0" max="3" step="0.1" value="0.4" /></label>
       <details id="advanced" class="flock-only">
         <summary>Advanced behavior</summary>
+        <label>Simulation core<select id="backend"><option value="cpp">C++23</option><option value="rust">Rust</option></select></label>
+        <p class="control-note">Both cores share this renderer. Switching restarts the playground.</p>
         <fieldset><legend>Predictive avoidance</legend>
           <label class="toggle"><input id="avoidance-enabled" type="checkbox" checked /> Anticipate close encounters</label>
           <label>Lookahead · s <output id="lookahead-value">4</output><input id="lookahead" type="range" min="0.5" max="8" step="0.5" value="4" /></label>

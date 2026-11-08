@@ -6,6 +6,7 @@ import { FlightMotion } from './motion';
 import { installInterfaceToggle } from './interface';
 import { installBehaviorControls } from './behavior';
 import type { Simulation } from './simulation';
+import { createRustSimulation } from './rust-adapter';
 import './style.css';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -53,9 +54,23 @@ async function start() {
 
   // Resolve against the page, not the bundled script's /assets/ directory.
   const moduleUrl = new URL(`${import.meta.env.BASE_URL}wasm/tinyflock.js`, document.baseURI).href;
-  const { default: createTinyflock } = await import(/* @vite-ignore */ moduleUrl);
-  const wasm = await createTinyflock();
-  const simulation: Simulation = new wasm.Simulation();
+  const rustBackend = new URLSearchParams(location.search).get('core') === 'rust';
+  const backend = element<HTMLSelectElement>('backend');
+  backend.value = rustBackend ? 'rust' : 'cpp';
+  backend.addEventListener('change', () => {
+    const url = new URL(location.href);
+    if (backend.value === 'rust') url.searchParams.set('core', 'rust'); else url.searchParams.delete('core');
+    location.assign(url.href);
+  });
+  let simulation: Simulation;
+  if (rustBackend) {
+    simulation = await createRustSimulation(new URL(`${import.meta.env.BASE_URL}wasm-rust/tinyflock_web.js`, document.baseURI).href);
+  } else {
+    const { default: createTinyflock } = await import(/* @vite-ignore */ moduleUrl);
+    const wasm = await createTinyflock();
+    simulation = new wasm.Simulation();
+  }
+  element('backend-badge').textContent = `${rustBackend ? 'Rust' : 'C++23'} · WebAssembly`;
   const obstacleVisuals = new THREE.Group();
   obstacleVisuals.position.y = flockAltitude;
   scene.add(obstacleVisuals);

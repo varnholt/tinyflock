@@ -19,6 +19,10 @@ jobs:
         run: cmake --build build/native --config Release
       - name: Check
         run: ctest --test-dir build/native -C Release --output-on-failure
+      - name: Compare C++ and Rust scenarios
+        run: |
+          cargo build --locked --release -p tinyflock --example parity
+          node scripts/check-parity.mjs
       - name: Check installed CMake package
         run: |
           cmake --install build/native --config Release --prefix "${{ github.workspace }}/build/install"
@@ -47,9 +51,22 @@ jobs:
           source .tools/emsdk/emsdk_env.sh
           emcmake cmake -S . -B build/wasm -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
           cmake --build build/wasm
+      - uses: actions/cache@v4
+        id: bindgen-cache
+        with:
+          path: ~/.cargo/bin/wasm-bindgen
+          key: wasm-bindgen-cli-0.2.130-${{ runner.os }}
+      - name: Install WebAssembly bindings CLI
+        if: steps.bindgen-cache.outputs.cache-hit != 'true'
+        run: cargo install wasm-bindgen-cli --version 0.2.130 --locked
+      - name: Build Rust WebAssembly
+        run: |
+          rustup target add wasm32-unknown-unknown
+          cargo build --locked --release -p tinyflock-web --target wasm32-unknown-unknown
+          wasm-bindgen --target web --out-name tinyflock_web --out-dir web/public/wasm-rust target/wasm32-unknown-unknown/release/tinyflock_web.wasm
       - name: Check WebAssembly adapter
         run: |
-          node tests/wasm-smoke.mjs
+          node --experimental-strip-types tests/wasm-smoke.mjs
           node web/scripts/trace-motion.mjs --check
       - name: Build browser demo
         working-directory: web
@@ -69,7 +86,7 @@ jobs:
 
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: [native, browser]
+    needs: [native, browser, rust, rust-msrv]
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -84,3 +101,23 @@ jobs:
       - name: Deploy demo
         id: deployment
         uses: actions/deploy-pages@v4
+
+  rust:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test and check crate
+        run: |
+          cargo test --workspace --locked
+          cargo fmt --all -- --check
+          cargo clippy --workspace --all-targets --locked -- -D warnings
+          cargo package -p tinyflock --locked
+
+  rust-msrv:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Rust 1.85 core
+        run: |
+          rustup toolchain install 1.85.0 --profile minimal
+          cargo +1.85.0 test --locked -p tinyflock

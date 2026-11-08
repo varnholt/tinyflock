@@ -1,0 +1,12 @@
+[package]
+name = "tinyflock-web"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+tinyflock = { path = ".." }
+wasm-bindgen = "=0.2.130"

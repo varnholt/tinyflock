@@ -1,0 +1,16 @@
+[package]
+name = "tinyflock"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "A few simple rules and a sky full of birds. A tiny, dependency-free flocking simulation."
+license = "MIT"
+repository = "https://github.com/varnholt/tinyflock"
+homepage = "https://varnholt.github.io/tinyflock/"
+documentation = "https://docs.rs/tinyflock"
+readme = "README.md"
+keywords = ["flocking", "boids", "simulation", "steering", "gamedev"]
+categories = ["simulation", "game-development"]
+include = ["src/**", "tests/**", "examples/**", "Cargo.toml", "README.md", "LICENSE"]
+
+[dependencies]

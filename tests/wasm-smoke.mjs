@@ -1,9 +1,14 @@
 import assert from 'node:assert/strict';
 import createTinyflock from '../web/public/wasm/tinyflock.js';
+import { readFile } from 'node:fs/promises';
+import { createRustSimulation } from '../web/src/rust-adapter.ts';
 
 const module = await createTinyflock();
-const first = new module.Simulation();
-const second = new module.Simulation();
+const rustUrl = new URL('../web/public/wasm-rust/tinyflock_web.js', import.meta.url).href;
+const rustBytes = await readFile(new URL('../web/public/wasm-rust/tinyflock_web_bg.wasm', import.meta.url));
+for (const [name, factory] of [['C++', async () => new module.Simulation()], ['Rust', () => createRustSimulation(rustUrl, rustBytes)]]) {
+const first = await factory();
+const second = await factory();
 try {
   first.reset(32, 42);
   second.reset(32, 42);
@@ -50,8 +55,21 @@ try {
   assert.equal(first.obstacles().length, 0);
   first.reset(32, 42);
   assert.deepEqual(first.state(), initial, 'restoring defaults clears caller forces');
-  console.log('WebAssembly boundary checks passed');
+  console.log(`${name} WebAssembly boundary checks passed`);
 } finally {
   first.delete();
   second.delete();
 }
+}
+const cpp = new module.Simulation(), rust = await createRustSimulation(rustUrl, rustBytes);
+try {
+  cpp.reset(96, 42); rust.reset(96, 42);
+  let difference = 0;
+  for (let tick = 0; tick < 120; ++tick) {
+    assert(cpp.step(.016) && rust.step(.016));
+    const a = cpp.state(), b = rust.state();
+    for (let i = 0; i < a.length; ++i) difference = Math.max(difference, Math.abs(a[i] - b[i]));
+  }
+  assert(difference < .001, `browser-backend parity difference ${difference}`);
+  console.log(`C++/Rust WASM parity passed; largest component difference ${difference.toExponential(2)}`);
+} finally { cpp.delete(); rust.delete(); }

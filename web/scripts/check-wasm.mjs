@@ -1,7 +1,7 @@
 import { access } from 'node:fs/promises';
 
 try {
-  await Promise.all(['wasm/tinyflock.js', 'wasm/tinyflock.wasm', 'assets/gull.glb',
+  await Promise.all(['wasm/tinyflock.js', 'wasm/tinyflock.wasm', 'wasm-rust/tinyflock_web.js', 'wasm-rust/tinyflock_web_bg.wasm', 'assets/gull.glb',
     'assets/kloppenheim_landscape_2k.hdr', 'assets/kloppenheim_landscape_4k.hdr']
     .map(file => access(new URL(`../public/${file}`, import.meta.url))));
 } catch {

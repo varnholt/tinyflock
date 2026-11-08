@@ -15,4 +15,3 @@ int main() {
     std::cout << flock.state().size() << " birds after 10 seconds; center: "
               << center.x << ", " << center.y << ", " << center.z << '\n';
 }
-

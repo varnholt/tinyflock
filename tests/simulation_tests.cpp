@@ -265,4 +265,3 @@ int main() {
         "invalid avoidance preserves the configured policy");
     std::cout << "All simulation checks passed\n";
 }
-
